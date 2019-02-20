@@ -6,6 +6,7 @@ extern crate serde;
 extern crate rmp_serde;
 extern crate enigma_crypto;
 extern crate futures;
+extern crate simplelog;
 
 use std::fs::File;
 use std::io::Read;
@@ -17,6 +18,7 @@ use enigma_crypto::hash::{Sha256, Keccak256};
 use serde_json::{*, Value};
 use rmp_serde::{Serializer};
 use serde::{Serialize};
+use simplelog::{TermLogger, LevelFilter};
 
 pub fn generate_contract_address() -> ContractAddress {
     let mut address = ContractAddress::default();
@@ -85,3 +87,8 @@ pub fn make_encrypted_response(req: &Value, addresses: Vec<ContractAddress>) -> 
     enc_template
 }
 
+
+pub fn log_to_stdout(level: Option<LevelFilter>) {
+    let level = level.unwrap_or_else(|| LevelFilter::max());
+    TermLogger::init(level, Default::default()).unwrap();
+}
