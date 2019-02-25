@@ -6,6 +6,7 @@ pub type StateKey = SymmetricKey;
 pub type DhKey = SymmetricKey;
 pub type ContractAddress = Hash256;
 pub type PubKey = [u8; 64];
+pub type Signature = [u8; 65];
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq)]

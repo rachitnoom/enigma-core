@@ -2,18 +2,18 @@
 
 use crate::common_u::errors::EnclaveFailError;
 use crate::db::DB;
-use enigma_types::traits::SliceCPtr;
+use enigma_types::{Signature, traits::SliceCPtr};
 use enigma_types::{EnclaveReturn, ContractAddress, PubKey, RawPointer};
 use failure::Error;
 use sgx_types::{sgx_enclave_id_t, sgx_status_t};
 
 extern "C" {
     fn ecall_ptt_req(eid: sgx_enclave_id_t, retval: *mut EnclaveReturn,
-                     signature: &mut [u8; 65], serialized_ptr: *mut u64) -> sgx_status_t;
-    fn ecall_ptt_res(eid: sgx_enclave_id_t, retval: *mut EnclaveReturn, msg_ptr: *const u8, msg_len: usize) -> sgx_status_t;
+                     signature: &mut Signature, serialized_ptr: *mut u64) -> sgx_status_t;
+    fn ecall_ptt_res(eid: sgx_enclave_id_t, retval: *mut EnclaveReturn, msg_ptr: *const u8, msg_len: usize, sig: &Signature) -> sgx_status_t;
     fn ecall_build_state(eid: sgx_enclave_id_t, retval: *mut EnclaveReturn, db_ptr: *const RawPointer, failed_ptr: *mut u64) -> sgx_status_t;
     fn ecall_get_user_key(eid: sgx_enclave_id_t, retval: *mut EnclaveReturn,
-                          signature: &mut [u8; 65], user_pubkey: &PubKey, serialized_ptr: *mut u64) -> sgx_status_t;
+                          signature: &mut Signature, user_pubkey: &PubKey, serialized_ptr: *mut u64) -> sgx_status_t;
 
 }
 
@@ -48,9 +48,9 @@ pub fn ptt_build_state(db: &mut DB, eid: sgx_enclave_id_t) -> Result<Vec<Contrac
     Ok(part)
 }
 
-pub fn ptt_res(eid: sgx_enclave_id_t, msg: &[u8]) -> Result<(), Error> {
+pub fn ptt_res(eid: sgx_enclave_id_t, msg: &[u8], sig: Signature) -> Result<(), Error> {
     let mut ret = EnclaveReturn::Success;
-    let status = unsafe { ecall_ptt_res(eid, &mut ret as *mut EnclaveReturn, msg.as_c_ptr(), msg.len()) };
+    let status = unsafe { ecall_ptt_res(eid, &mut ret as *mut EnclaveReturn, msg.as_c_ptr(), msg.len(), &sig) };
     if ret != EnclaveReturn::Success || status != sgx_status_t::SGX_SUCCESS {
         return Err(EnclaveFailError { err: ret, status }.into());
     }
@@ -197,7 +197,7 @@ pub mod tests {
         let mut serialized_enc_response = Vec::new();
         enc_response.serialize(&mut Serializer::new(&mut serialized_enc_response)).unwrap();
 
-        ptt_res(eid, &serialized_enc_response).unwrap();
+        ptt_res(eid, &serialized_enc_response, [0u8; 65]).unwrap();
     }
 
     #[test]
@@ -217,7 +217,7 @@ pub mod tests {
         let mut serialized_enc_response = Vec::new();
         enc_response.serialize(&mut Serializer::new(&mut serialized_enc_response)).unwrap();
 
-        ptt_res(enclave.geteid(), &serialized_enc_response).unwrap();
+        ptt_res(enclave.geteid(), &serialized_enc_response, [0u8; 65]).unwrap();
 
         let address_result = ptt_build_state(&mut db, enclave.geteid()).unwrap();
         assert_eq!(address_result, vec![address[2]]);

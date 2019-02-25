@@ -153,6 +153,7 @@ pub struct IpcGetDeltas {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PrincipalResponse {
     pub response: String,
+    pub sig: String,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
