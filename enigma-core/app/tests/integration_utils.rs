@@ -97,7 +97,14 @@ pub fn get_ptt_req_msg() -> Value {
 }
 
 pub fn get_ptt_res_msg(response: &[u8]) -> Value {
-    json!({"id" : &generate_job_id(), "type" : "PTTResponse", "input": {"response": response.to_hex() }})
+    json!({
+        "id" : &generate_job_id(),
+        "type" : "PTTResponse",
+        "input": {
+            "response": response.to_hex(),
+            "sig": "cd8b481bad5abb805bba42eea258a1036e531c288b37adc4389bb6d07ae7c4ea6e460f8338a7c86711f6fc50b1deb51f420153306a370d7f99341489ccc0d9a2ec",
+        },
+        })
 }
 
 pub fn get_deploy_msg(pre_code: &str, args: &str, callable: &str, usr_pubkey: &str, gas_limit: u64, addr: &str) -> Value {
