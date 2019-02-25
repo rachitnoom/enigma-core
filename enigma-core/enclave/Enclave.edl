@@ -41,7 +41,7 @@ enclave {
 
         public EnclaveReturn ecall_ptt_req([out] uint8_t sig[65], [out] uint64_t* serialized_ptr);
 
-        public EnclaveReturn ecall_ptt_res([in, size=msg_len] uint8_t *msg_ptr, size_t msg_len);
+        public EnclaveReturn ecall_ptt_res([in, size=msg_len] uint8_t *msg_ptr, size_t msg_len, [in] uint8_t sig[65]);
 
         public EnclaveReturn ecall_build_state([in]const RawPointer* db_ptr, [out] uint64_t* failed_ptr);
 

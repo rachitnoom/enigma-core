@@ -1,7 +1,7 @@
 use crate::error::CryptoError;
 use secp256k1::{PublicKey, SecretKey, SharedSecret};
 use crate::hash::Keccak256;
-use enigma_types::{DhKey, PubKey};
+use enigma_types::{DhKey, PubKey, Signature};
 
 #[derive(Debug)]
 pub struct KeyPair {
@@ -76,7 +76,7 @@ impl KeyPair {
     /// 1. 32 Bytes, ECDSA `r` variable.
     /// 2. 32 Bytes ECDSA `s` variable.
     /// 3. 1 Bytes ECDSA `v` variable aligned to the right for Ethereum compatibility
-    pub fn sign(&self, message: &[u8]) -> Result<[u8; 65], CryptoError> {
+    pub fn sign(&self, message: &[u8]) -> Result<Signature, CryptoError> {
         let hashed_msg = message.keccak256();
         let message_to_sign = secp256k1::Message::parse(&hashed_msg);
 

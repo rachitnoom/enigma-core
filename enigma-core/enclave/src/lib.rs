@@ -62,7 +62,8 @@ use enigma_crypto::hash::Keccak256;
 use enigma_crypto::{asymmetric, CryptoError, symmetric};
 use enigma_tools_t::common::{errors_t::EnclaveError, LockExpectMutex, EthereumAddress};
 use enigma_tools_t::{build_arguments_g::*, quote_t, storage_t};
-use enigma_types::{traits::SliceCPtr, EnclaveReturn, ExecuteResult, Hash256, ContractAddress, PubKey, ResultStatus, RawPointer, DhKey};
+use enigma_types::{traits::SliceCPtr, EnclaveReturn, ExecuteResult, Hash256,
+                   ContractAddress, PubKey, ResultStatus, RawPointer, DhKey, Signature};
 use wasm_utils::{build, SourceTarget};
 
 use sgx_types::*;
@@ -188,7 +189,11 @@ pub unsafe extern "C" fn ecall_ptt_req(sig: &mut [u8; 65], serialized_ptr: *mut 
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn ecall_ptt_res(msg_ptr: *const u8, msg_len: usize) -> EnclaveReturn {
+pub unsafe extern "C" fn ecall_ptt_res(msg_ptr: *const u8, msg_len: usize, sig: &Signature) -> EnclaveReturn {
+    // TODO: The sig should be verified against something.
+    // An idea would be to save the latest principal signing key, sign on it every time and remove all keys when PTT.
+    // This way it promises that the state and delta are encrypted with the latest principal signing Key
+    // and if that verified by ethereum then ebverything is OK
     let msg_slice = slice::from_raw_parts(msg_ptr, msg_len);
     ecall_ptt_res_internal(msg_slice).into()
 }
