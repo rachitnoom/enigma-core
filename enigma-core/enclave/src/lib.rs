@@ -394,6 +394,12 @@ unsafe fn ecall_deploy_internal(pre_execution_data: &mut Vec<Box<[u8]>>, bytecod
                                 gas_limit: u64, db_ptr: *const RawPointer,
                                 result: &mut ExecuteResult) -> Result<(), EnclaveError> {
 
+    let saftey_bound = (1.5f64 * 1024f64 * 1024f64).round() as usize;
+    let stack_size: usize = env!("MAX_STACK").trim().parse().expect("Bad MAX_STACK value");
+    if bytecode.len() > stack_size - saftey_bound { // Check if the size of the bytecode is bigger than the stack size with a 1.5Mib safety bound
+        return Err(EnclaveError::InputError{message: format!("Size of bytecode is too big for the stack: {}", bytecode.len())})
+    }
+
     let pre_code_hash = bytecode.keccak256();
     let inputs_hash = enigma_crypto::hash::prepare_hash_multiple(&[constructor, args, &pre_code_hash[..], user_key][..]).keccak256();
     pre_execution_data.push(Box::new(*inputs_hash));

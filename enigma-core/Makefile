@@ -1,7 +1,10 @@
 ######## My portable ############
 SGX_SDK_RUST ?= $(HOME)/sgx
-#CUSTOM_EDL_PATH := $(SGX_SDK_RUST)/edl
-
+export MAX_STACK ?= 4194304 #That's 4Mib
+# I set a maximum stack size of 6MiB, this exact value has no source or explanation.
+#  This is to give ~4MiB of storage for a secret contract and another 1-2MiB of stack for everything else.
+# All of this is because ocalls allocate memory on the satck so we need to increase it.
+RUSTC_FLAGS := -C link-args=-zstack-size=$(MAX_STACK)
 ######## SGX SDK Settings ########
 
 SGX_SDK ?= /opt/sgxsdk
@@ -116,7 +119,7 @@ $(App_Enclave_u_Object): app/Enclave_u.o
 	cp $(App_Enclave_u_Object) ./lib
 
 $(App_Name): $(App_Enclave_u_Object) $(App_SRC_Files)
-	@cd app && SGX_SDK=$(SGX_SDK) cargo build $(App_Rust_Flags)
+	@cd app && SGX_SDK=$(SGX_SDK) RUSTFLAGS="$(RUSTC_FLAGS)" cargo build $(App_Rust_Flags)
 	@echo "Cargo  =>  $@"
 	mkdir -p ./bin
 	cp $(App_Rust_Path)/$(App_Name) bin/$(App_Name)
@@ -149,7 +152,7 @@ compiler-rt:
 
 .PHONY: test
 test: all
-	@cd app && cargo test $(App_Rust_Flags)
+	@cd app && RUSTFLAGS="$(RUSTC_FLAGS)" cargo test $(App_Rust_Flags)
 
 .PHONY: clean
 clean:
